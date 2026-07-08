@@ -1,0 +1,43 @@
+# ==============================================================================
+# Local SSH Configuration Template for Compute Canada (Alliance Canada) Clusters
+# Save this in your local ~/.ssh/config file.
+# Replace <your_username> with your actual cluster username (e.g., taco).
+#
+# IMPORTANT: Since this configuration utilizes SSH connection multiplexing
+# (ControlMaster) to speed up subsequent connections, you MUST create the sockets
+# directory on your local machine before connecting:
+#
+#   mkdir -p ~/.ssh/sockets
+# ==============================================================================
+
+# Common settings for all HPC clusters
+Host balam killarney trillium trillium-gpu nibi
+    User <your_username>
+    ForwardAgent yes
+    ControlMaster auto
+    ControlPath ~/.ssh/sockets/%r@%h:%p
+    ControlPersist 10m
+    ServerAliveInterval 60
+    ServerAliveCountMax 3
+
+# Balam (High host-to-GPU memory link A100s)
+Host balam
+    HostName balam.scinet.utoronto.ca
+
+# Killarney (H100 & L40S GPU cluster)
+# NOTE: Killarney restricts access geographically.
+# If connecting off-campus, you must use the Vector Institute or UofT VPN.
+Host killarney
+    HostName killarney.alliancecan.ca
+
+# Trillium CPU login
+Host trillium
+    HostName trillium.alliancecan.ca
+
+# Trillium GPU login (always use this to load CUDA modules or submit GPU jobs)
+Host trillium-gpu
+    HostName trillium-gpu.alliancecan.ca
+
+# Nibi (CPU/GPU cluster)
+Host nibi
+    HostName nibi.scinet.utoronto.ca

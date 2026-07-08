@@ -1,0 +1,27 @@
+name: project_template
+channels:
+  - conda-forge
+  - nodefaults
+dependencies:
+  - python=3.14
+  - ipython
+  - ipykernel
+  - jupyterlab
+  - matplotlib
+  - seaborn
+  - notebook
+  - numpy
+  - scipy
+  - pandas
+  - pytest
+  - ruff
+  - scikit-learn
+  - tqdm
+  - pyrefly
+  - pre-commit
+  - draccus
+  - loguru
+  - safetensors
+  - pip
+  - pip:
+    - more-itertools
