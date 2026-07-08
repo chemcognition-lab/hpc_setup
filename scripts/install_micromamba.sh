@@ -28,8 +28,8 @@ fi
 echo -e "${GREEN}✓ Found \$SCRATCH directory at: $SCRATCH${NC}"
 
 # Define target paths
-BIN_DIR="$SCRATCH/bin"
-MAMBA_ROOT="$SCRATCH/micromamba"
+BIN_DIR="$HOME/.local/bin"
+MAMBA_ROOT="$HOME/.micromamba"
 MAMBA_CACHE="$SCRATCH/micromamba_cache"
 ENVS_DIR="$SCRATCH/envs"
 

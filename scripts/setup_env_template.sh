@@ -21,7 +21,7 @@ echo "=== Switched to repository root: $(pwd) ==="
 ENV_NAME="my_project"
 
 # Define target paths
-BIN_DIR="$SCRATCH/bin"
+BIN_DIR="$HOME/.local/bin"
 MICROMAMBA_EXE="$BIN_DIR/micromamba"
 MAMBA_CACHE="$SCRATCH/micromamba_cache"
 SCRATCH_ENV_DIR="$SCRATCH/envs/$ENV_NAME"
@@ -75,4 +75,4 @@ mkdir -p results/logs
 
 echo -e "\n=== Setup complete! ==="
 echo "To activate this environment in future scripts or interactive sessions, run:"
-echo -e "    eval \"\$($SCRATCH/bin/micromamba shell hook --shell=\$SHELL)\" && micromamba activate $SCRATCH_ENV_DIR"
+echo -e "    eval \"\$($HOME/.local/bin/micromamba shell hook --shell=\$SHELL)\" && micromamba activate $SCRATCH_ENV_DIR"

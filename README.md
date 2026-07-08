@@ -79,7 +79,7 @@ ssh -T git@github.com
 ---
 
 ### 4. Install Micromamba (Scientific software package manager)
-To run scientific software, we need a package manager. We use Micromamba installed on `$SCRATCH` to isolate project packages and avoid filling up the cluster's limited home directories. 
+To run scientific software, we need a package manager. We install the Micromamba binary in your home directory (so it is permanent), but configure its package caches and environments to live on `$SCRATCH` to avoid filling up the cluster's limited home space/inodes.
 *(Note: Other modern packaging tools like `uv` exist, and Pixi may work on clusters in the future, but Micromamba is currently the stable standard).*
 1. Run the installer:
    ```bash
