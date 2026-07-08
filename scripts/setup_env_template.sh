@@ -8,6 +8,13 @@
 
 set -euo pipefail
 
+# Enforce that script is running on an HPC cluster with $SCRATCH
+if [ -z "${SCRATCH:-}" ]; then
+    echo "Error: \$SCRATCH environment variable is not defined."
+    echo "This script is designed to run in SciNet/Compute Canada cluster environments."
+    exit 1
+fi
+
 # 1. Resolve project directory structure
 # This assumes the script is run from a subfolder (like scripts/ or hpc/) and
 # moves up to the root. Adjust if placing this file directly in the repo root.
@@ -38,7 +45,14 @@ fi
 echo "=== Configuring Micromamba Caches ==="
 mkdir -p "$MAMBA_CACHE"
 "$MICROMAMBA_EXE" config append pkgs_dirs "$MAMBA_CACHE"
+"$MICROMAMBA_EXE" config append envs_dirs "$(dirname "$SCRATCH_ENV_DIR")"
 "$MICROMAMBA_EXE" config set channel_priority strict
+
+# Redirect standard caches to scratch to prevent home directory/inode exhaustion
+export XDG_CACHE_HOME="$SCRATCH/.cache"
+export XDG_CONFIG_HOME="$SCRATCH/.config"
+export PYTHONUSERBASE="$SCRATCH/.local"
+mkdir -p "$XDG_CACHE_HOME" "$XDG_CONFIG_HOME" "$PYTHONUSERBASE"
 
 # 4. Initialize micromamba shell hook for this script execution
 # Detect shell automatically, fallback to bash

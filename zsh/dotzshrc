@@ -23,6 +23,7 @@ fi
 export ZSH="$HOME/.oh-my-zsh"
 
 # Set name of the theme to load
+POWERLEVEL9K_DISABLE_CONFIGURATION_WIZARD=true
 ZSH_THEME="powerlevel10k/powerlevel10k"
 
 # Which plugins would you like to load?
