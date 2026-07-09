@@ -1,6 +1,6 @@
 # HPC Onboarding and Setup Guide
 
-This repository contains configurations and scripts to set up shell, SSH, GitHub access, and package environments on Killarney, Trillium, and Balam clusters.
+This repository contains configurations and scripts to set up shell, SSH, GitHub access, and package environments on Killarney, Trillium, Balam, TamIA, Vulcan, and Nibi clusters.
 
 ---
 
@@ -27,7 +27,7 @@ Connecting to cluster terminals usually requires typing long hostnames and crede
    ```bash
    mkdir -p ~/.ssh/sockets
    ```
-4. Connect using the short aliases: `ssh killarney`, `ssh trillium-gpu`, or `ssh balam`.
+4. Connect using the short aliases: `ssh killarney`, `ssh trillium-gpu`, `ssh balam`, `ssh tamia`, `ssh vulcan`, or `ssh nibi`.
 *(Note: Killarney requires connecting to Vector or UofT VPN if off-campus).*
 
 ---
@@ -125,6 +125,9 @@ For concrete examples, see the [project_template](https://github.com/chemcogniti
 - [SciNet Killarney Documentation](https://docs.scinet.utoronto.ca/index.php/Killarney)
 - [SciNet Trillium Documentation](https://docs.scinet.utoronto.ca/index.php/Trillium)
 - [SciNet Balam Documentation](https://docs.scinet.utoronto.ca/index.php/Balam)
+- [Alliance TamIA Documentation](https://docs.alliancecan.ca/wiki/TamIA/en)
+- [Alliance Vulcan Documentation](https://docs.alliancecan.ca/wiki/Vulcan)
+- [Alliance Nibi Documentation](https://docs.alliancecan.ca/wiki/Nibi)
 
 ### Lab Code Repositories
 *(Note: Accessing and cloning these private repositories requires your GitHub account to be added to the `chemcognition-lab` organization).*

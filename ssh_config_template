@@ -11,7 +11,7 @@
 # ==============================================================================
 
 # Common settings for all HPC clusters
-Host balam killarney trillium trillium-gpu nibi
+Host balam killarney trillium trillium-gpu nibi tamia vulcan
     User <your_username>
     ForwardAgent yes
     ControlMaster auto
@@ -40,4 +40,12 @@ Host trillium-gpu
 
 # Nibi (CPU/GPU cluster)
 Host nibi
-    HostName nibi.scinet.utoronto.ca
+    HostName nibi.alliancecan.ca
+
+# TamIA (GPU cluster)
+Host tamia
+    HostName tamia.alliancecan.ca
+
+# Vulcan (GPU cluster)
+Host vulcan
+    HostName vulcan.alliancecan.ca
