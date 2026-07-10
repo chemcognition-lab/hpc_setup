@@ -16,6 +16,7 @@ COLOR_BOLD = "\033[1m"
 COLOR_GREEN = "\033[92m"
 COLOR_YELLOW = "\033[93m"
 COLOR_RED = "\033[91m"
+COLOR_GRAY = "\033[90m"
 COLOR_RESET = "\033[0m"
 
 
@@ -180,6 +181,7 @@ def print_dashboard(groups: dict[str, dict], target_group: str | None, current_u
     print(f"Group Total Usage    : {format_usage(g_data['raw_usage'])} CPU-h")
     print(f"Group Allocation     : {g_data['norm_shares'] * 100:.3f}% of cluster")
     print(f"Group Effective Usage: {g_data['effectv_usage'] * 100:.3f}% of cluster")
+    print(f"{COLOR_GRAY}* Note: Usage represents CPU-hours decayed over a 7-day half-life (~30-day sliding window).{COLOR_RESET}")
     
     num_users = len(all_users_metrics)
     total_width = 82 + len(f"Cluster Rank (of {num_users})")
