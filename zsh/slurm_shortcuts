@@ -140,7 +140,7 @@ stail() {
     local tail_pid=$!
 
     # Set up trap to clean up the tail process if the user hits Ctrl+C (INT) or is terminated (TERM)
-    trap 'kill "$tail_pid" 2>/dev/null; wait "$tail_pid" 2>/dev/null; trap - INT TERM' INT TERM
+    trap "kill $tail_pid 2>/dev/null; wait $tail_pid 2>/dev/null; trap - INT TERM" INT TERM
 
     # Poll squeue until ALL monitored jobs are no longer active
     local monitored_base_ids=()
