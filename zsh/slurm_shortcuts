@@ -29,7 +29,12 @@ _sresolve_log() {
         local search_dirs=( "." "./logs" "./results/logs" )
         for dir in "${search_dirs[@]}"; do
             if [ -d "$dir" ]; then
-                local found=$(find "$dir" -maxdepth 2 -type f \( -name "*$job_id*" -o -name "*$base_job_id*" \) -printf "%T@ %p\n" 2>/dev/null | sort -nr | head -n 1 | cut -d' ' -f2-)
+                # A. Try matching the specific array/task job ID first (e.g. *99999_1*)
+                local found=$(find "$dir" -maxdepth 2 -type f -name "*$job_id*" -printf "%T@ %p\n" 2>/dev/null | sort -nr | head -n 1 | cut -d' ' -f2-)
+                # B. Fallback to matching the base job ID (e.g. *99999*)
+                if [ -z "$found" ]; then
+                    found=$(find "$dir" -maxdepth 2 -type f -name "*$base_job_id*" -printf "%T@ %p\n" 2>/dev/null | sort -nr | head -n 1 | cut -d' ' -f2-)
+                fi
                 if [ -n "$found" ]; then
                     log_file="$found"
                     break
