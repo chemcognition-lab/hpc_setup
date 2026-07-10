@@ -49,6 +49,18 @@ Available shortcuts:
 - `shistory`: Lists status and runtime of your last 10 jobs.
 - `stail`: Tails the latest log in `results/logs/` and monitors until completion.
 - `sabort`: Cancels your latest active job.
+- `sinspect` / `sdead`: Inspects the exit code and outputs the last 40 log lines of the last failed or dead job.
+  - *Question:* Why did my last job crash?
+  - *Assumption:* Assumes your job logs are written in a local `./logs` or `./results/logs` directory.
+- `ssweep`: Analyzes an active or completed Optuna hyperparameter study to show status, best score, elapsed time, and ETA.
+  - *Question:* How is my training study progressing and when will it finish?
+  - *Assumption:* Assumes your sweep generates an `optuna_study.log` file in your results folder.
+- `susage`: Displays a dashboard of cluster-wide standing and individual/group resource utilization and priority ratios.
+  - *Question:* Am I over-utilizing my group's allocation and getting deprioritized in the queue?
+  - *Assumption:* Assumes you are registered in an allocation project group on a Slurm cluster.
+- `supdate`: Fetches and installs the latest zsh configurations and script helpers directly from GitHub.
+  - *Question:* How do I sync and get the latest updates to these cluster productivity tools?
+  - *Assumption:* Assumes you have outbound internet access on your current login node.
 
 ---
 
