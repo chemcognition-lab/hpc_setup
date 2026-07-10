@@ -268,12 +268,27 @@ sstudy() {
     if [ -f "$1" ]; then
         log_path="$1"
     else
-        # Find the most recently modified optuna_study.log under results/
-        log_path=$(find results/ -maxdepth 3 -name "optuna_study.log" -printf "%T@ %p\n" 2>/dev/null | sort -nr | head -n 1 | cut -d' ' -f2-)
+        # Build search paths dynamically from environment variables
+        local search_paths=(".")
+        [ -d "$HOME/projects" ] && search_paths+=("$HOME/projects")
+        [ -n "$PROJECT" ] && [ -d "$PROJECT" ] && search_paths+=("$PROJECT")
+        [ -n "$SCRATCH" ] && [ -d "$SCRATCH" ] && search_paths+=("$SCRATCH")
+
+        local candidates=()
+        for dir in "${search_paths[@]}"; do
+            # Search up to 4 levels deep to find optuna_study.log in any project subdirectory
+            for f in $(find "$dir" -maxdepth 4 -name "optuna_study.log" 2>/dev/null); do
+                candidates+=("$f")
+            done
+        done
+
+        if [ ${#candidates[@]} -gt 0 ]; then
+            log_path=$(stat -c "%Y %n" "${candidates[@]}" 2>/dev/null | sort -nr | head -n 1 | cut -d' ' -f2-)
+        fi
     fi
 
     if [ -z "$log_path" ] || [ ! -f "$log_path" ]; then
-        echo -e "\033[1;31mCould not find any optuna_study.log file under results/.\033[0m"
+        echo -e "\033[1;31mCould not find any optuna_study.log file under current directory or standard workspace paths.\033[0m"
         return 1
     fi
 
