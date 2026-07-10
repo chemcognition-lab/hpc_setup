@@ -20,13 +20,13 @@ COLOR_RESET = "\033[0m"
 
 
 def format_usage(raw_seconds: float) -> str:
-    """Format raw cpu/tres-seconds into human-readable CPU-hours."""
+    """Format raw cpu/tres-seconds into human-readable CPU-hours (no suffix)."""
     hours = raw_seconds / 3600.0
     if hours >= 1_000_000:
-        return f"{hours / 1_000_000:.2f}M CPU-h"
+        return f"{hours / 1_000_000:.2f}M"
     elif hours >= 1_000:
-        return f"{hours / 1_000:.1f}k CPU-h"
-    return f"{hours:.1f} CPU-h"
+        return f"{hours / 1_000:.1f}k"
+    return f"{hours:.1f}"
 
 
 def get_ratio_status(ratio: float) -> tuple[str, str]:
@@ -177,14 +177,17 @@ def print_dashboard(groups: dict[str, dict], target_group: str | None, current_u
 
     # Group detail section
     print(f"\n{COLOR_BOLD}=== 2. Group Breakdown ({target_group}) ==={COLOR_RESET}")
-    print(f"Group Total Usage    : {format_usage(g_data['raw_usage'])}")
+    print(f"Group Total Usage    : {format_usage(g_data['raw_usage'])} CPU-h")
     print(f"Group Allocation     : {g_data['norm_shares'] * 100:.3f}% of cluster")
     print(f"Group Effective Usage: {g_data['effectv_usage'] * 100:.3f}% of cluster")
-    print("-" * 80)
+    
+    num_users = len(all_users_metrics)
+    total_width = 82 + len(f"Cluster Rank (of {num_users})")
+    print("-" * total_width)
 
-    header = f"{'User':<15} | {'Usage':<12} | {'Usage %':<8} | {'FairShare':<9} | {'Status':<13} | {'Cluster Rank':<10}"
+    header = f"{'User':<20} | {'Usage (CPU-h)':<13} | {'Usage %':<9} | {'FairShare':<10} | {'Status':<15} | Cluster Rank (of {num_users})"
     print(header)
-    print("-" * 80)
+    print("-" * total_width)
 
     # Sort users in the group by raw usage descending
     sorted_group_users = sorted(g_data["users"], key=lambda x: x["raw_usage"], reverse=True)
@@ -193,40 +196,41 @@ def print_dashboard(groups: dict[str, dict], target_group: str | None, current_u
         username = u["username"]
         is_me = username == current_user
         if is_me:
-            user_display = f"{COLOR_BOLD}{username + ' (you)':<15}{COLOR_RESET}"
+            user_display = f"{COLOR_BOLD}{username + ' (you)':<20}{COLOR_RESET}"
         else:
-            user_display = f"{username:<15}"
+            user_display = f"{username:<20}"
 
         fs_val = u["fairshare"]
         if fs_val is not None:
             fs_raw = f"{fs_val:.5f}"
             fs_color = get_fairshare_color(fs_val)
-            fs_str = f"{fs_color}{fs_raw:<9}{COLOR_RESET}"
+            fs_str = f"{fs_color}{fs_raw:<10}{COLOR_RESET}"
         else:
-            fs_str = f"{'N/A':<9}"
+            fs_str = f"{'N/A':<10}"
 
         u_ratio = u["ratio"]
         u_status, u_color = get_ratio_status(u_ratio)
-        u_status_str = f"{u_color}{u_status:<13}{COLOR_RESET}"
+        u_status_str = f"{u_color}{u_status:<15}{COLOR_RESET}"
 
         # Get user's cluster-wide rank if available
         rank_key = (target_group, username)
         if rank_key in user_ranks:
-            u_rank_str = f"#{user_ranks[rank_key]} of {len(all_users_metrics)}"
+            u_rank_str = f"#{user_ranks[rank_key]}"
         else:
             u_rank_str = "N/A"
 
         eff_pct = u["effectv_usage"] * 100
+        pct_str = f"{eff_pct:.2f}%"
 
         print(
             f"{user_display} | "
-            f"{format_usage(u['raw_usage']):<12} | "
-            f"{eff_pct:<7.2f}% | "
+            f"{format_usage(u['raw_usage']):<13} | "
+            f"{pct_str:<9} | "
             f"{fs_str} | "
             f"{u_status_str} | "
             f"{u_rank_str}"
         )
-    print("-" * 80)
+    print("-" * total_width)
 
 
 def main():
