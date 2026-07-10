@@ -236,7 +236,10 @@ alias sdead="sinspect"
 # 6. Update the local shortcuts file directly from GitHub
 supdate() {
     local target_url="https://raw.githubusercontent.com/chemcognition-lab/hpc_setup/main/zsh/slurm_shortcuts?t=$(date +%s)"
+    local share_script_url="https://raw.githubusercontent.com/chemcognition-lab/hpc_setup/main/scripts/slurm_shares.py?t=$(date +%s)"
+    local sweep_script_url="https://raw.githubusercontent.com/chemcognition-lab/hpc_setup/main/scripts/optuna_sweep.py?t=$(date +%s)"
     local temp_file=$(mktemp)
+    local temp_script=$(mktemp)
 
     echo -e "\033[1;36mFetching latest slurm_shortcuts from GitHub...\033[0m"
     if curl -fsSL "$target_url" -o "$temp_file"; then
@@ -244,6 +247,28 @@ supdate() {
         rm -f "$temp_file"
         echo -e "\033[1;32m🎉 Successfully updated and re-sourced ~/.slurm_shortcuts!\033[0m"
         source "$HOME/.slurm_shortcuts"
+
+        # Also pull utility scripts into ~/.local/bin
+        mkdir -p "$HOME/.local/bin"
+
+        echo -e "\033[1;36mFetching latest slurm_shares.py from GitHub...\033[0m"
+        if curl -fsSL "$share_script_url" -o "$temp_script"; then
+            cp "$temp_script" "$HOME/.local/bin/slurm_shares.py"
+            chmod +x "$HOME/.local/bin/slurm_shares.py"
+            echo -e "\033[1;32m🎉 Successfully updated ~/.local/bin/slurm_shares.py!\033[0m"
+        else
+            echo -e "\033[1;31mWarning: Failed to update slurm_shares.py\033[0m"
+        fi
+
+        echo -e "\033[1;36mFetching latest optuna_sweep.py from GitHub...\033[0m"
+        if curl -fsSL "$sweep_script_url" -o "$temp_script"; then
+            cp "$temp_script" "$HOME/.local/bin/optuna_sweep.py"
+            chmod +x "$HOME/.local/bin/optuna_sweep.py"
+            echo -e "\033[1;32m🎉 Successfully updated ~/.local/bin/optuna_sweep.py!\033[0m"
+        else
+            echo -e "\033[1;31mWarning: Failed to update optuna_sweep.py\033[0m"
+        fi
+        rm -f "$temp_script"
 
         # Query GitHub API for the latest commit info of the file
         local api_url="https://api.github.com/repos/chemcognition-lab/hpc_setup/commits?path=zsh/slurm_shortcuts&page=1&per_page=1"
@@ -258,12 +283,13 @@ supdate() {
     else
         echo -e "\033[1;31mError: Failed to download shortcuts from $target_url\033[0m"
         rm -f "$temp_file"
+        rm -f "$temp_script"
         return 1
     fi
 }
 
 # 7. Check the progress and status of an Optuna study log
-sstudy() {
+ssweep() {
     local log_path=""
     local target_trials=0
     
@@ -287,133 +313,10 @@ sstudy() {
     fi
 
     echo -e "\033[1;36mAnalyzing Optuna Study: $log_path\033[0m"
-    python -c "
-import sys
-import json
-from datetime import datetime
-
-log_path = '$log_path'
-target_trials = $target_trials
-trials = {}
-direction = 'maximize'
-next_trial_id = 0
-
-try:
-    with open(log_path, 'r') as f:
-        for line in f:
-            line = line.strip()
-            if not line:
-                continue
-            try:
-                record = json.loads(line)
-            except Exception:
-                continue
-            op_code = record.get('op_code')
-            if op_code == 0:  # CREATE_STUDY
-                directions = record.get('directions')
-                if directions and len(directions) > 0:
-                    if directions[0] == 1 or str(directions[0]).upper() == 'MINIMIZE':
-                        direction = 'minimize'
-            elif op_code == 4:  # CREATE_TRIAL
-                trial_id = next_trial_id
-                next_trial_id += 1
-                start_time = record.get('datetime_start')
-                trials[trial_id] = {
-                    'state': 0, 
-                    'value': None, 
-                    'start_time': start_time,
-                    'end_time': None
-                }
-            elif op_code == 6:  # SET_TRIAL_STATE_VALUES
-                trial_id = record.get('trial_id')
-                state = record.get('state')
-                values = record.get('values')
-                end_time = record.get('datetime_complete')
-                if trial_id is not None:
-                    if trial_id not in trials:
-                        trials[trial_id] = {}
-                    if state is not None:
-                        trials[trial_id]['state'] = state
-                    if values and len(values) > 0:
-                        trials[trial_id]['value'] = values[0]
-                    trials[trial_id]['end_time'] = end_time
-
-    # Calculate trial durations
-    durations = []
-    for t in trials.values():
-        if t.get('start_time') and t.get('end_time'):
-            try:
-                start = datetime.fromisoformat(t['start_time'].replace('Z', ''))
-                end = datetime.fromisoformat(t['end_time'].replace('Z', ''))
-                durations.append((end - start).total_seconds())
-            except Exception:
-                pass
-
-    completed_trials = {tid: t for tid, t in trials.items() if t.get('state') == 1 and t.get('value') is not None}
-    running = sum(1 for t in trials.values() if t.get('state') == 0)
-    completed = len(completed_trials)
-    pruned = sum(1 for t in trials.values() if t.get('state') == 2)
-    failed = sum(1 for t in trials.values() if t.get('state') == 3)
-    total_finished = completed + pruned + failed
-    trials_left = max(0, target_trials - total_finished)
-
-    if target_trials > 0:
-        pct = (len(trials) / target_trials) * 100
-        print(f'  - Total Trials:   {len(trials)} / {target_trials} ({pct:.1f}%)')
-    else:
-        print(f'  - Total Trials:   {len(trials)}')
-
-    print(f'  - Completed:      \033[1;32m{completed}\033[0m')
-    print(f'  - Pruned/Stopped: \033[1;33m{pruned}\033[0m')
-    print(f'  - Failed:         \033[1;31m{failed}\033[0m')
-
-    if completed > 0:
-        if direction == 'minimize':
-            best_trial_id = min(completed_trials, key=lambda tid: completed_trials[tid]['value'])
-        else:
-            best_trial_id = max(completed_trials, key=lambda tid: completed_trials[tid]['value'])
-        best_value = completed_trials[best_trial_id]['value']
-        print(f'  - Best Val Score: \033[1;35m{best_value:.4f}\033[0m (Trial {best_trial_id})')
-
-    # Display elapsed time
-    start_times = [datetime.fromisoformat(t['start_time'].replace('Z', '')) for t in trials.values() if t.get('start_time')]
-    if start_times:
-        sweep_start = min(start_times)
-        now = datetime.now()
-        elapsed = now - sweep_start
-        elapsed_sec = elapsed.total_seconds()
-        elapsed_h = int(elapsed_sec // 3600)
-        elapsed_m = int((elapsed_sec % 3600) // 60)
-        start_str = sweep_start.strftime('%b %d %H:%M')
-        now_str = now.strftime('%b %d %H:%M')
-        print(f'  - Elapsed Time:   \033[1;30m{elapsed_h}h {elapsed_m}m\033[0m (Start: {start_str} | Current: {now_str})')
-
-    # Display duration stats and ETA
-    if durations:
-        durations.sort()
-        n = len(durations)
-        if n % 2 == 1:
-            median_dur = durations[n // 2]
-        else:
-            median_dur = (durations[n // 2 - 1] + durations[n // 2]) / 2.0
-        
-        m_minutes = int(median_dur // 60)
-        m_seconds = int(median_dur % 60)
-        print(f'  - Median Duration:\033[1;30m {m_minutes}m {m_seconds}s\033[0m')
-
-        if target_trials > 0:
-            if trials_left > 0:
-                workers = running if running > 0 else 8
-                eta_seconds = (trials_left * median_dur) / workers
-                eta_h = int(eta_seconds // 3600)
-                eta_m = int((eta_seconds % 3600) // 60)
-                worker_str = f'{workers} active workers' if running > 0 else 'assuming 8 parallel workers'
-                print(f'  - Est. Time Left: \033[1;36m{eta_h}h {eta_m}m\033[0m ({worker_str})')
-            else:
-                print(f'  - Est. Time Left: \033[1;32m0h 0m (Sweep Finished)\033[0m')
-
-except Exception as e:
-    print(f'Error reading study: {e}')
-"
+    python3 "$HOME/.local/bin/optuna_sweep.py" "$log_path" "$target_trials"
 }
-alias ssweep="sstudy"
+
+# 8. Cleanly display Slurm cluster-wide, group, and user share/priority dashboard
+susage() {
+    python3 "$HOME/.local/bin/slurm_shares.py" "$@"
+}
