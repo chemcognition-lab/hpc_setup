@@ -244,6 +244,17 @@ supdate() {
         rm -f "$temp_file"
         echo -e "\033[1;32m🎉 Successfully updated and re-sourced ~/.slurm_shortcuts!\033[0m"
         source "$HOME/.slurm_shortcuts"
+
+        # Query GitHub API for the latest commit info of the file
+        local api_url="https://api.github.com/repos/chemcognition-lab/hpc_setup/commits?path=zsh/slurm_shortcuts&page=1&per_page=1"
+        local commit_info=$(curl -fsSL "$api_url" 2>/dev/null)
+        if [ -n "$commit_info" ]; then
+            local commit_date=$(echo "$commit_info" | grep -m 1 '"date":' | cut -d'"' -f4)
+            local commit_msg=$(echo "$commit_info" | grep -m 1 '"message":' | cut -d'"' -f4)
+            echo -e "\033[1;34mUpdated Version Details:\033[0m"
+            echo -e "  - \033[1;30mCommit Date:\033[0m    $commit_date"
+            echo -e "  - \033[1;30mCommit Msg:\033[0m     $commit_msg"
+        fi
     else
         echo -e "\033[1;31mError: Failed to download shortcuts from $target_url\033[0m"
         rm -f "$temp_file"
