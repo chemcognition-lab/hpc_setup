@@ -292,8 +292,39 @@ sstudy() {
         return 1
     fi
 
+    # Locate the correct python interpreter dynamically
+    local py_exe="python"
+    if [ -n "$CONDA_PREFIX" ] && [ -x "$CONDA_PREFIX/bin/python" ]; then
+        py_exe="$CONDA_PREFIX/bin/python"
+    else
+        local env_file=""
+        if [ -f "environment.yml" ]; then
+            env_file="environment.yml"
+        elif [ -f "environment.yaml" ]; then
+            env_file="environment.yaml"
+        fi
+
+        if [ -n "$env_file" ]; then
+            local env_name=$(grep -E "^name:" "$env_file" 2>/dev/null | awk '{print $2}')
+            if [ -n "$env_name" ]; then
+                local possible_pys=(
+                    "$SCRATCH/envs/$env_name/bin/python"
+                    "$HOME/miniforge3/envs/$env_name/bin/python"
+                    "$HOME/miniconda3/envs/$env_name/bin/python"
+                    "$HOME/.conda/envs/$env_name/bin/python"
+                )
+                for p in "${possible_pys[@]}"; do
+                    if [ -x "$p" ]; then
+                        py_exe="$p"
+                        break
+                    fi
+                done
+            fi
+        fi
+    fi
+
     echo -e "\033[1;36mAnalyzing Optuna Study: $log_path\033[0m"
-    python -c "
+    "$py_exe" -c "
 import optuna
 from optuna.storages import JournalStorage
 from optuna.storages.journal import JournalFileBackend
