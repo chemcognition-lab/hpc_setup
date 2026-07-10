@@ -1,8 +1,9 @@
 # ==========================================
-# Slurm & Logging Shortcuts for HPC Clusters
-# Source this file in your ~/.zshrc:
-#   source ~/.slurm_shortcuts
-# ==========================================
+
+# Clean up any old aliases to avoid function definition parse conflicts
+unalias ssweep 2>/dev/null
+unalias sshares 2>/dev/null
+unalias sstudy 2>/dev/null
 
 # 1. Quick queue check (only your jobs)
 alias squeue="squeue -u \$USER"
