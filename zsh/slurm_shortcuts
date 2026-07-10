@@ -277,43 +277,66 @@ sstudy() {
         return 1
     fi
 
-    # Determine Python executable using the environment name in environment.yml
-    local py_exe="python"
-    if [ -f "environment.yml" ]; then
-        local env_name=$(grep -E "^name:" environment.yml 2>/dev/null | awk '{print $2}')
-        if [ -n "$env_name" ] && [ -n "$SCRATCH" ] && [ -x "$SCRATCH/envs/$env_name/bin/python" ]; then
-            py_exe="$SCRATCH/envs/$env_name/bin/python"
-        fi
-    fi
-
-    if ! "$py_exe" -c "import optuna" 2>/dev/null; then
-        echo -e "\033[1;31mError: 'optuna' module not found in '$py_exe'. Make sure your conda/mamba environment is installed and matching your environment.yml name.\033[0m"
-        return 1
-    fi
-
     echo -e "\033[1;36mAnalyzing Optuna Study: $log_path\033[0m"
-    "$py_exe" -c "
-import optuna
-from optuna.storages import JournalStorage
-from optuna.storages.journal import JournalFileBackend
+    python -c "
 import sys
+import json
 
 log_path = '$log_path'
+trials = {}
+direction = 'maximize'
+
 try:
-    storage = JournalStorage(JournalFileBackend(log_path))
-    study = optuna.load_study(study_name=None, storage=storage)
-    trials = study.trials
-    completed = sum(1 for t in trials if t.state == optuna.trial.TrialState.COMPLETE)
-    running = sum(1 for t in trials if t.state == optuna.trial.TrialState.RUNNING)
-    pruned = sum(1 for t in trials if t.state == optuna.trial.TrialState.PRUNED)
-    failed = sum(1 for t in trials if t.state == optuna.trial.TrialState.FAIL)
+    with open(log_path, 'r') as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                record = json.loads(line)
+            except Exception:
+                continue
+            op_code = record.get('op_code')
+            if op_code == 0:  # CREATE_STUDY
+                directions = record.get('directions')
+                if directions and len(directions) > 0:
+                    if directions[0] == 1 or str(directions[0]).upper() == 'MINIMIZE':
+                        direction = 'minimize'
+            elif op_code == 4:  # CREATE_TRIAL
+                trial_id = record.get('trial_id')
+                if trial_id is not None:
+                    trials[trial_id] = {'state': 0, 'value': None}
+            elif op_code == 6:  # SET_TRIAL_STATE_VALUES
+                trial_id = record.get('trial_id')
+                state = record.get('state')
+                values = record.get('values')
+                if trial_id is not None:
+                    if trial_id not in trials:
+                        trials[trial_id] = {}
+                    if state is not None:
+                        trials[trial_id]['state'] = state
+                    if values and len(values) > 0:
+                        trials[trial_id]['value'] = values[0]
+
+    completed_trials = {tid: t for tid, t in trials.items() if t.get('state') == 1 and t.get('value') is not None}
+    running = sum(1 for t in trials.values() if t.get('state') == 0)
+    completed = len(completed_trials)
+    pruned = sum(1 for t in trials.values() if t.get('state') == 2)
+    failed = sum(1 for t in trials.values() if t.get('state') == 3)
+
     print(f'  - Total Trials:   {len(trials)}')
     print(f'  - Running:        \033[1;34m{running}\033[0m')
     print(f'  - Completed:      \033[1;32m{completed}\033[0m')
     print(f'  - Pruned/Stopped: \033[1;33m{pruned}\033[0m')
     print(f'  - Failed:         \033[1;31m{failed}\033[0m')
+
     if completed > 0:
-        print(f'  - Best Val Score: \033[1;35m{study.best_value:.4f}\033[0m (Trial {study.best_trial.number})')
+        if direction == 'minimize':
+            best_trial_id = min(completed_trials, key=lambda tid: completed_trials[tid]['value'])
+        else:
+            best_trial_id = max(completed_trials, key=lambda tid: completed_trials[tid]['value'])
+        best_value = completed_trials[best_trial_id]['value']
+        print(f'  - Best Val Score: \033[1;35m{best_value:.4f}\033[0m (Trial {best_trial_id})')
 except Exception as e:
     print(f'Error reading study: {e}')
 "
