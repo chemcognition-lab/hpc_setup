@@ -242,34 +242,24 @@ supdate() {
     local temp_file=$(mktemp)
     local temp_script=$(mktemp)
 
-    echo -e "\033[1;36mFetching latest slurm_shortcuts from GitHub...\033[0m"
     if curl -fsSL "$target_url" -o "$temp_file"; then
         cp "$temp_file" "$HOME/.slurm_shortcuts"
         rm -f "$temp_file"
-        echo -e "\033[1;32m🎉 Successfully updated and re-sourced ~/.slurm_shortcuts!\033[0m"
         source "$HOME/.slurm_shortcuts"
 
-        # Also pull utility scripts into ~/.local/bin
+        # Pull utility scripts into ~/.local/bin
         mkdir -p "$HOME/.local/bin"
-
-        echo -e "\033[1;36mFetching latest slurm_shares.py from GitHub...\033[0m"
         if curl -fsSL "$share_script_url" -o "$temp_script"; then
             cp "$temp_script" "$HOME/.local/bin/slurm_shares.py"
             chmod +x "$HOME/.local/bin/slurm_shares.py"
-            echo -e "\033[1;32m🎉 Successfully updated ~/.local/bin/slurm_shares.py!\033[0m"
-        else
-            echo -e "\033[1;31mWarning: Failed to update slurm_shares.py\033[0m"
         fi
-
-        echo -e "\033[1;36mFetching latest optuna_sweep.py from GitHub...\033[0m"
         if curl -fsSL "$sweep_script_url" -o "$temp_script"; then
             cp "$temp_script" "$HOME/.local/bin/optuna_sweep.py"
             chmod +x "$HOME/.local/bin/optuna_sweep.py"
-            echo -e "\033[1;32m🎉 Successfully updated ~/.local/bin/optuna_sweep.py!\033[0m"
-        else
-            echo -e "\033[1;31mWarning: Failed to update optuna_sweep.py\033[0m"
         fi
         rm -f "$temp_script"
+
+        echo -e "\033[1;32m🎉 Fetching latest slurm_shortcuts from GitHub... updated and sourced to ~/.slurm_shortcuts!\033[0m"
 
         # Query GitHub API for the latest commit info of the file
         local api_url="https://api.github.com/repos/chemcognition-lab/hpc_setup/commits?path=zsh/slurm_shortcuts&page=1&per_page=1"
