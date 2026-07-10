@@ -268,59 +268,27 @@ sstudy() {
     if [ -f "$1" ]; then
         log_path="$1"
     else
-        # Build search paths dynamically from environment variables
-        local search_paths=(".")
-        [ -d "$HOME/projects" ] && search_paths+=("$HOME/projects")
-        [ -n "$PROJECT" ] && [ -d "$PROJECT" ] && search_paths+=("$PROJECT")
-        [ -n "$SCRATCH" ] && [ -d "$SCRATCH" ] && search_paths+=("$SCRATCH")
-
-        local candidates=()
-        for dir in "${search_paths[@]}"; do
-            # Search up to 4 levels deep to find optuna_study.log in any project subdirectory
-            for f in $(find "$dir" -maxdepth 4 -name "optuna_study.log" 2>/dev/null); do
-                candidates+=("$f")
-            done
-        done
-
-        if [ ${#candidates[@]} -gt 0 ]; then
-            log_path=$(stat -c "%Y %n" "${candidates[@]}" 2>/dev/null | sort -nr | head -n 1 | cut -d' ' -f2-)
-        fi
+        # Find the most recently modified optuna_study.log under results/
+        log_path=$(find results/ -maxdepth 3 -name "optuna_study.log" -printf "%T@ %p\n" 2>/dev/null | sort -nr | head -n 1 | cut -d' ' -f2-)
     fi
 
     if [ -z "$log_path" ] || [ ! -f "$log_path" ]; then
-        echo -e "\033[1;31mCould not find any optuna_study.log file under current directory or standard workspace paths.\033[0m"
+        echo -e "\033[1;31mCould not find any optuna_study.log. Make sure you run this from your repository root containing a 'results/' directory.\033[0m"
         return 1
     fi
 
-    # Locate the correct python interpreter dynamically
+    # Determine Python executable using the environment name in environment.yml
     local py_exe="python"
-    if [ -n "$CONDA_PREFIX" ] && [ -x "$CONDA_PREFIX/bin/python" ]; then
-        py_exe="$CONDA_PREFIX/bin/python"
-    else
-        local env_file=""
-        if [ -f "environment.yml" ]; then
-            env_file="environment.yml"
-        elif [ -f "environment.yaml" ]; then
-            env_file="environment.yaml"
+    if [ -f "environment.yml" ]; then
+        local env_name=$(grep -E "^name:" environment.yml 2>/dev/null | awk '{print $2}')
+        if [ -n "$env_name" ] && [ -n "$SCRATCH" ] && [ -x "$SCRATCH/envs/$env_name/bin/python" ]; then
+            py_exe="$SCRATCH/envs/$env_name/bin/python"
         fi
+    fi
 
-        if [ -n "$env_file" ]; then
-            local env_name=$(grep -E "^name:" "$env_file" 2>/dev/null | awk '{print $2}')
-            if [ -n "$env_name" ]; then
-                local possible_pys=(
-                    "$SCRATCH/envs/$env_name/bin/python"
-                    "$HOME/miniforge3/envs/$env_name/bin/python"
-                    "$HOME/miniconda3/envs/$env_name/bin/python"
-                    "$HOME/.conda/envs/$env_name/bin/python"
-                )
-                for p in "${possible_pys[@]}"; do
-                    if [ -x "$p" ]; then
-                        py_exe="$p"
-                        break
-                    fi
-                done
-            fi
-        fi
+    if ! "$py_exe" -c "import optuna" 2>/dev/null; then
+        echo -e "\033[1;31mError: 'optuna' module not found in '$py_exe'. Make sure your conda/mamba environment is installed and matching your environment.yml name.\033[0m"
+        return 1
     fi
 
     echo -e "\033[1;36mAnalyzing Optuna Study: $log_path\033[0m"
