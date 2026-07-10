@@ -250,3 +250,47 @@ supdate() {
         return 1
     fi
 }
+
+# 7. Check the progress and status of an Optuna study log
+sstudy() {
+    local log_path=""
+    if [ -f "$1" ]; then
+        log_path="$1"
+    else
+        # Find the most recently modified optuna_study.log under results/
+        log_path=$(find results/ -maxdepth 3 -name "optuna_study.log" -printf "%T@ %p\n" 2>/dev/null | sort -nr | head -n 1 | cut -d' ' -f2-)
+    fi
+
+    if [ -z "$log_path" ] || [ ! -f "$log_path" ]; then
+        echo -e "\033[1;31mCould not find any optuna_study.log file under results/.\033[0m"
+        return 1
+    fi
+
+    echo -e "\033[1;36mAnalyzing Optuna Study: $log_path\033[0m"
+    python -c "
+import optuna
+from optuna.storages import JournalStorage
+from optuna.storages.journal import JournalFileBackend
+import sys
+
+log_path = '$log_path'
+try:
+    storage = JournalStorage(JournalFileBackend(log_path))
+    study = optuna.load_study(study_name=None, storage=storage)
+    trials = study.trials
+    completed = sum(1 for t in trials if t.state == optuna.trial.TrialState.COMPLETE)
+    running = sum(1 for t in trials if t.state == optuna.trial.TrialState.RUNNING)
+    pruned = sum(1 for t in trials if t.state == optuna.trial.TrialState.PRUNED)
+    failed = sum(1 for t in trials if t.state == optuna.trial.TrialState.FAIL)
+    print(f'  - Total Trials:   {len(trials)}')
+    print(f'  - Running:        \033[1;34m{running}\033[0m')
+    print(f'  - Completed:      \033[1;32m{completed}\033[0m')
+    print(f'  - Pruned/Stopped: \033[1;33m{pruned}\033[0m')
+    print(f'  - Failed:         \033[1;31m{failed}\033[0m')
+    if completed > 0:
+        print(f'  - Best Val Score: \033[1;35m{study.best_value:.4f}\033[0m (Trial {study.best_trial.number})')
+except Exception as e:
+    print(f'Error reading study: {e}')
+"
+}
+alias ssweep="sstudy"
