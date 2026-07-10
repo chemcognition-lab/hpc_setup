@@ -44,9 +44,9 @@ _sresolve_log() {
         local candidates=()
         for dir in "${search_dirs[@]}"; do
             if [ -d "$dir" ]; then
-                while IFS= read -r file; do
+                for file in $(find "$dir" -maxdepth 2 -type f \( -name "*.log" -o -name "*.out" -o -name "*.err" \) 2>/dev/null); do
                     candidates+=("$file")
-                done < <(find "$dir" -maxdepth 2 -type f \( -name "*.log" -o -name "*.out" -o -name "*.err" \) 2>/dev/null)
+                done
             fi
         done
         if [ ${#candidates[@]} -gt 0 ]; then
@@ -67,11 +67,11 @@ stail() {
         job_ids=("$@")
     else
         # Find all active job IDs of the user from squeue
-        while IFS= read -r line; do
+        for line in $(squeue -u "$USER" -h -o "%A"); do
             if [ -n "$line" ]; then
                 job_ids+=("$line")
             fi
-        done < <(squeue -u "$USER" -h -o "%A")
+        done
 
         # If no active jobs, get the latest job ID from sacct
         if [ ${#job_ids[@]} -eq 0 ]; then
@@ -122,7 +122,8 @@ stail() {
         for log in "${valid_logs[@]}"; do
             local jid=""
             if [ -n "$ZSH_VERSION" ]; then
-                jid="${valid_ids[idx+1]}"
+                local z_idx=$((idx + 1))
+                jid="${valid_ids[z_idx]}"
             else
                 jid="${valid_ids[idx]}"
             fi
