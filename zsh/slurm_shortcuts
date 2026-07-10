@@ -375,6 +375,19 @@ try:
         best_value = completed_trials[best_trial_id]['value']
         print(f'  - Best Val Score: \033[1;35m{best_value:.4f}\033[0m (Trial {best_trial_id})')
 
+    # Display elapsed time
+    start_times = [datetime.fromisoformat(t['start_time'].replace('Z', '')) for t in trials.values() if t.get('start_time')]
+    if start_times:
+        sweep_start = min(start_times)
+        now = datetime.now()
+        elapsed = now - sweep_start
+        elapsed_sec = elapsed.total_seconds()
+        elapsed_h = int(elapsed_sec // 3600)
+        elapsed_m = int((elapsed_sec % 3600) // 60)
+        start_str = sweep_start.strftime('%b %d %H:%M')
+        now_str = now.strftime('%b %d %H:%M')
+        print(f'  - Elapsed Time:   \033[1;30m{elapsed_h}h {elapsed_m}m\033[0m (Start: {start_str} | Current: {now_str})')
+
     # Display duration stats and ETA
     if durations:
         durations.sort()
