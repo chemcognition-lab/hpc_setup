@@ -363,7 +363,6 @@ try:
     else:
         print(f'  - Total Trials:   {len(trials)}')
 
-    print(f'  - Running:        \033[1;34m{running}\033[0m')
     print(f'  - Completed:      \033[1;32m{completed}\033[0m')
     print(f'  - Pruned/Stopped: \033[1;33m{pruned}\033[0m')
     print(f'  - Failed:         \033[1;31m{failed}\033[0m')
