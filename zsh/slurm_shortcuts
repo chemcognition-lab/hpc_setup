@@ -235,7 +235,7 @@ alias sdead="sinspect"
 
 # 6. Update the local shortcuts file directly from GitHub
 supdate() {
-    local target_url="https://raw.githubusercontent.com/chemcognition-lab/hpc_setup/main/zsh/slurm_shortcuts"
+    local target_url="https://raw.githubusercontent.com/chemcognition-lab/hpc_setup/main/zsh/slurm_shortcuts?t=$(date +%s)"
     local temp_file=$(mktemp)
 
     echo -e "\033[1;36mFetching latest slurm_shortcuts from GitHub...\033[0m"
