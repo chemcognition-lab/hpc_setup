@@ -105,12 +105,29 @@ stail() {
 
     # Tail the resolved log files
     if [ ${#valid_logs[@]} -eq 1 ]; then
-        echo -e "\033[1;36mTailing log: ${valid_logs[0]} (Job ID: ${valid_ids[0]})\033[0m"
-        tail -f "${valid_logs[0]}" &
+        local first_log=""
+        local first_id=""
+        if [ -n "$ZSH_VERSION" ]; then
+            first_log="${valid_logs[1]}"
+            first_id="${valid_ids[1]}"
+        else
+            first_log="${valid_logs[0]}"
+            first_id="${valid_ids[0]}"
+        fi
+        echo -e "\033[1;36mTailing log: $first_log (Job ID: $first_id)\033[0m"
+        tail -f "$first_log" &
     else
         echo -e "\033[1;36mTailing ${#valid_logs[@]} active logs simultaneously:\033[0m"
-        for i in "${!valid_logs[@]}"; do
-            echo -e "  - \033[1;34mJob ${valid_ids[$i]}\033[0m: ${valid_logs[$i]}"
+        local idx=0
+        for log in "${valid_logs[@]}"; do
+            local jid=""
+            if [ -n "$ZSH_VERSION" ]; then
+                jid="${valid_ids[idx+1]}"
+            else
+                jid="${valid_ids[idx]}"
+            fi
+            echo -e "  - \033[1;34mJob $jid\033[0m: $log"
+            idx=$((idx + 1))
         done
         tail -f "${valid_logs[@]}" &
     fi
