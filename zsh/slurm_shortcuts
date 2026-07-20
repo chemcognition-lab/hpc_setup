@@ -4,6 +4,7 @@
 unalias ssweep 2>/dev/null
 unalias sshares 2>/dev/null
 unalias sstudy 2>/dev/null
+unalias shelp 2>/dev/null
 
 # 1. Quick queue check (only your jobs)
 alias squeue="squeue -u \$USER"
@@ -310,4 +311,18 @@ ssweep() {
 # 8. Cleanly display Slurm cluster-wide, group, and user share/priority dashboard
 susage() {
     python3 "$HOME/.local/bin/slurm_shares.py" "$@"
+}
+
+# 9. Help menu to display these custom shortcuts
+shelp() {
+    echo -e "\033[1;35m=== Slurm/HPC Custom Shortcuts & Commands ===\033[0m"
+    echo -e "  \033[1;32msqueue\033[0m     : Quick queue check (only your jobs)"
+    echo -e "  \033[1;32mshistory\033[0m   : View history of your last 10 jobs (even finished ones)"
+    echo -e "  \033[1;32mstail\033[0m      : Live tail of latest job logs (handles single/array jobs)"
+    echo -e "  \033[1;32msabort\033[0m     : Smart cancel: cancels latest job or specific job IDs"
+    echo -e "  \033[1;32msinspect\033[0m   : Inspect the state & last 40 lines of job's log (alias: \033[1;32msdead\033[0m)"
+    echo -e "  \033[1;32mssweep\033[0m     : Check progress and status of an Optuna study log"
+    echo -e "  \033[1;32msusage\033[0m     : Display Slurm cluster-wide, group, and user share/priority"
+    echo -e "  \033[1;32msupdate\033[0m    : Update all local shortcuts and scripts from GitHub"
+    echo -e "  \033[1;32mshelp\033[0m      : Display this help message"
 }

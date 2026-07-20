@@ -45,6 +45,7 @@ HPC clusters default to a basic Bash shell. Switching to Zsh and Oh My Zsh gives
 This configures Oh My Zsh, Powerlevel10k, zsh-autosuggestions, and sources `~/.slurm_shortcuts`. It also redirects your standard cache directories (like `XDG_CACHE_HOME`) to `$SCRATCH` so you don't run out of space or cause write errors on read-only compute nodes.
 
 Available shortcuts:
+- `shelp`: Displays a quick-reference list of all custom Slurm/HPC shortcuts.
 - `squeue`: Shows only your active jobs.
 - `shistory`: Lists status and runtime of your last 10 jobs.
 - `stail`: Tails the latest log in `results/logs/` and monitors until completion.
