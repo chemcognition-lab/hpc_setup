@@ -51,6 +51,7 @@ fi
 
 # 4. Copy configurations (with backup)
 SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 
 echo -e "${BLUE}Configuring ~/.zshrc...${NC}"
 if [ -f "$HOME/.zshrc" ]; then
@@ -67,6 +68,18 @@ if [ -f "$HOME/.slurm_shortcuts" ]; then
 fi
 cp "$SCRIPT_DIR/slurm_shortcuts" "$HOME/.slurm_shortcuts"
 echo -e "${GREEN}✓ Copied slurm shortcuts to ~/.slurm_shortcuts${NC}"
+
+echo -e "${BLUE}Installing helper scripts into ~/.local/bin...${NC}"
+mkdir -p "$HOME/.local/bin"
+if [ -f "$PROJECT_ROOT/scripts/slurm_shares.py" ]; then
+    cp "$PROJECT_ROOT/scripts/slurm_shares.py" "$HOME/.local/bin/slurm_shares.py"
+    chmod +x "$HOME/.local/bin/slurm_shares.py"
+fi
+if [ -f "$PROJECT_ROOT/scripts/optuna_sweep.py" ]; then
+    cp "$PROJECT_ROOT/scripts/optuna_sweep.py" "$HOME/.local/bin/optuna_sweep.py"
+    chmod +x "$HOME/.local/bin/optuna_sweep.py"
+fi
+echo -e "${GREEN}✓ Installed Slurm helper scripts to ~/.local/bin${NC}"
 
 # 5. Enable auto-switching to Zsh in ~/.bash_profile
 BASH_PROFILE="$HOME/.bash_profile"

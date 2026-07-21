@@ -46,7 +46,7 @@ This configures Oh My Zsh, Powerlevel10k, zsh-autosuggestions, and sources `~/.s
 
 Available shortcuts:
 - `shelp`: Displays a quick-reference list of all custom Slurm/HPC shortcuts.
-- `squeue`: Shows only your active jobs.
+- `squ`: Shows only your active jobs.
 - `shistory`: Lists status and runtime of your last 10 jobs.
 - `stail`: Tails the latest log in `results/logs/` and monitors until completion.
 - `sabort`: Cancels your latest active job.
